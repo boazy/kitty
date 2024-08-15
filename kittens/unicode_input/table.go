@@ -1,6 +1,6 @@
 // License: GPLv3 Copyright: 2023, Kovid Goyal, <kovid at kovidgoyal.net>
 
-package unicode_input
+package main
 
 import (
 	"fmt"

@@ -199,8 +199,16 @@ func (self *Readline) dispatch_key_action(ac Action) error {
 	return self.perform_action(ac, uint(repeat_count))
 }
 
+func is_control_code(s string) bool {
+	if len(s) != 1 {
+		return false
+	}
+	r := rune(s[0])
+	return r < 0x20
+}
+
 func (self *Readline) handle_key_event(event *loop.KeyEvent) error {
-	if event.Text != "" {
+	if event.Text != "" && !is_control_code(event.Text) {
 		return nil
 	}
 	sm := default_shortcuts()

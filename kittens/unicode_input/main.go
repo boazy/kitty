@@ -1,6 +1,6 @@
 // License: GPLv3 Copyright: 2023, Kovid Goyal, <kovid at kovidgoyal.net>
 
-package unicode_input
+package main
 
 import (
 	"bytes"
@@ -14,7 +14,6 @@ import (
 	"strings"
 	"unicode"
 
-	"kitty/tools/cli"
 	"kitty/tools/tty"
 	"kitty/tools/tui"
 	"kitty/tools/tui/loop"
@@ -544,6 +543,11 @@ func (self *handler) refresh() {
 	self.draw_screen()
 }
 
+type Options struct {
+	Tab            string
+	EmojiVariation string
+}
+
 func run_loop(opts *Options) (lp *loop.Loop, err error) {
 	output := tui.KittenOutputSerializer()
 	lp, err = loop.New()
@@ -638,25 +642,26 @@ func run_loop(opts *Options) (lp *loop.Loop, err error) {
 	return
 }
 
-func main(cmd *cli.Command, o *Options, args []string) (rc int, err error) {
+func main() {
+	opts := &Options {
+		EmojiVariation: "none",
+		Tab: "previous",
+	}
+
 	go unicode_names.Initialize() // start parsing name data in the background
-	build_sets()
-	lp, err := run_loop(o)
+	lp, err := run_loop(opts)
 	if err != nil {
 		if err == ErrCanceledByUser {
 			err = nil
 		}
-		return 1, err
+		os.Exit(1)
 	}
 	ds := lp.DeathSignalName()
 	if ds != "" {
 		fmt.Println("Killed by signal: ", ds)
 		lp.KillIfSignalled()
-		return 1, nil
+		os.Exit(1)
 	}
 	return
 }
 
-func EntryPoint(parent *cli.Command) {
-	create_cmd(parent, main)
-}
