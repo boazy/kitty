@@ -174,8 +174,8 @@ func (self *handler) initialize() {
 	self.table.initialize(self.emoji_variation, self.ctx)
 	self.lp.SetWindowTitle("Unicode input")
 	self.current_char = InvalidChar
-	self.current_tab_formatter = self.ctx.SprintFunc("reverse=false bold=true")
-	self.tab_bar_formatter = self.ctx.SprintFunc("reverse=true")
+	self.current_tab_formatter = self.ctx.SprintFunc("fg=green")
+	self.tab_bar_formatter = self.ctx.SprintFunc("")
 	self.chosen_formatter = self.ctx.SprintFunc("fg=green")
 	self.chosen_name_formatter = self.ctx.SprintFunc("italic=true dim=true")
 	self.dim_formatter = self.ctx.SprintFunc("dim=true")
@@ -425,14 +425,9 @@ func (self *handler) handle_emoticons_key_event(event *loop.KeyEvent) {
 }
 
 func (self *handler) handle_favorites_key_event(event *loop.KeyEvent) {
+	var err error
 	if event.MatchesPressOrRepeat("f12") {
 		event.Handled = true
-		exe, err := os.Executable()
-		if err != nil {
-			self.err = err
-			self.lp.Quit(1)
-			return
-		}
 		fp := favorites_path()
 		if len(load_favorites(false)) == 0 || !favorites_loaded_from_user_config {
 			raw := serialize_favorites(load_favorites(false))
@@ -450,18 +445,18 @@ func (self *handler) handle_favorites_key_event(event *loop.KeyEvent) {
 			}
 		}
 		err = self.lp.SuspendAndRun(func() error {
-			cmd := exec.Command(exe, "edit-in-kitty", "--type=overlay", fp)
+			editor := os.Getenv("EDITOR")
+			if editor != "" {
+				editor = "vim"
+			}
+
+			cmd := exec.Command(editor, fp)
 			cmd.Stdin = os.Stdin
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			err = cmd.Run()
 			if err == nil {
 				load_favorites(true)
-			} else {
-				fmt.Fprintln(os.Stderr, err)
-				fmt.Fprintln(os.Stderr, "Failed to run edit-in-kitty, favorites have not been changed. Press Enter to continue.")
-				var ln string
-				fmt.Scanln(&ln)
 			}
 			return nil
 		})
